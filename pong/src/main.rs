@@ -15,6 +15,19 @@ const BALL_MAX_ANGLE: f32 = 45.0;
 const WINDOW_WIDTH: u32 = 1280;
 const WINDOW_HEIGHT: u32 = 720;
 
+// TODO: State
+// TODO: Racket and Wall collision slide
+// TODO: Common "Velocity"/"Moving" Component
+// TODO: Slow start velocity
+// TODO: Main Menu
+// TODO: AI
+
+#[derive(States, Debug, Hash, Eq, PartialEq, Clone)]
+enum GameState {
+    Paused,
+    InGame,
+}
+
 #[derive(Component)]
 struct Movable {
     speed: f32,
@@ -43,9 +56,6 @@ struct ScoreText;
 #[derive(Component)]
 struct PauseText;
 
-#[derive(Resource)]
-struct IsPaused(bool);
-
 #[derive(Resource, Deref)]
 struct SoundEffect {
     handle: Handle<AudioSource>,
@@ -61,21 +71,22 @@ pub struct PongPlugin;
 
 impl Plugin for PongPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(IsPaused(true));
         app.insert_resource(Score { p1: 0, p2: 0 });
         app.init_resource::<SoundEffect>();
+        app.insert_state(GameState::Paused);
         app.add_systems(Startup, setup);
         app.add_systems(
             Update,
             (
-                ((movement, sliding), collision)
+                (movement, sliding, collision)
                     .chain()
-                    .run_if(run_if_unpaused),
-                pause_handler,
+                    .run_if(in_state(GameState::InGame)),
+                toggle_pause,
                 update_score_text,
-                paused_text_visibility,
             ),
         );
+        app.add_systems(OnEnter(GameState::Paused), show_pause_text);
+        app.add_systems(OnExit(GameState::Paused), hide_pause_text);
     }
 }
 
@@ -227,8 +238,8 @@ fn movement(
 fn sliding(
     ball: Single<(&mut Sliding, &mut Transform), With<Ball>>,
     timer: Res<Time>,
-    mut paused: ResMut<IsPaused>,
     mut score: ResMut<Score>,
+    mut next_state: ResMut<NextState<GameState>>,
 ) {
     let (mut sliding, mut transform) = ball.into_inner();
     transform.translation += sliding.direction.normalize() * sliding.speed * timer.delta_secs();
@@ -247,7 +258,7 @@ fn sliding(
     if transform.translation.x >= WINDOW_WIDTH as f32 / 2.0
         || transform.translation.x <= -(WINDOW_WIDTH as f32) / 2.0
     {
-        paused.0 = true;
+        next_state.set(GameState::Paused);
 
         if transform.translation.x > 0.0 {
             score.p2 += 1;
@@ -305,9 +316,16 @@ fn collision(
     }
 }
 
-fn pause_handler(mut paused: ResMut<IsPaused>, keys: Res<ButtonInput<KeyCode>>) {
+fn toggle_pause(
+    state: Res<State<GameState>>,
+    mut next_state: ResMut<NextState<GameState>>,
+    keys: Res<ButtonInput<KeyCode>>,
+) {
     if keys.just_pressed(KeyCode::Space) {
-        paused.0 = !paused.0;
+        next_state.set(match state.get() {
+            GameState::Paused => GameState::InGame,
+            GameState::InGame => GameState::Paused,
+        });
     }
 }
 
@@ -317,19 +335,10 @@ fn update_score_text(score_text: Single<&mut Text, With<ScoreText>>, score: Res<
     }
 }
 
-fn paused_text_visibility(
-    pause_text: Single<&mut Visibility, With<PauseText>>,
-    paused: Res<IsPaused>,
-) {
-    if paused.is_changed() {
-        *pause_text.into_inner() = if paused.0 {
-            Visibility::Visible
-        } else {
-            Visibility::Hidden
-        }
-    }
+fn show_pause_text(pause_text: Single<&mut Visibility, With<PauseText>>) {
+    *pause_text.into_inner() = Visibility::Visible;
 }
 
-fn run_if_unpaused(paused: Res<IsPaused>) -> bool {
-    !paused.0
+fn hide_pause_text(pause_text: Single<&mut Visibility, With<PauseText>>) {
+    *pause_text.into_inner() = Visibility::Hidden;
 }
