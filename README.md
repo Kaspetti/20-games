@@ -1,3 +1,3 @@
 # 20 Games Challenge
 
-## (./pong)[Game 1 | Pong]
+## [Game 1 | Pong] (./pong)
