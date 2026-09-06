@@ -30,25 +30,15 @@ enum GameState {
 
 // Components
 #[derive(Component)]
-struct Movable {
-    speed: f32,
-}
-
-#[derive(Component)]
-struct Sliding {
+struct Moving {
     speed: f32,
     direction: Vec3,
 }
 
-#[derive(Component, Default)]
-struct Collider;
-
 #[derive(Component)]
-#[require(Collider)]
 struct Bar(u8);
 
 #[derive(Component)]
-#[require(Collider)]
 struct Ball;
 
 #[derive(Component)]
@@ -80,7 +70,7 @@ impl Plugin for PongPlugin {
         app.add_systems(
             Update,
             (
-                (movement, sliding, collision)
+                (bar_input, movement, clamp_bars, collision, ball_bounds)
                     .chain()
                     .run_if(in_state(GameState::InGame)),
                 toggle_pause,
@@ -142,7 +132,7 @@ fn setup(
     let ball_mesh = meshes.add(Circle::new(BALL_RADIUS));
     commands.spawn((
         Ball,
-        Sliding {
+        Moving {
             speed: BALL_SPEED,
             direction: Vec3::new(
                 (rng.random_range(-1.0..1.0) as f32).signum(),
@@ -189,7 +179,10 @@ fn spawn_bar(
 
     commands.spawn((
         Bar(player),
-        Movable { speed: BAR_SPEED },
+        Moving {
+            speed: BAR_SPEED,
+            direction: Vec3::ZERO,
+        },
         Mesh2d(bar_mesh),
         MeshMaterial2d(material.clone()),
         Transform::from_xyz(
@@ -204,13 +197,15 @@ fn spawn_bar(
     ));
 }
 
-fn movement(
-    mut bars: Query<(&Bar, &Movable, &mut Transform)>,
-    timer: Res<Time>,
-    keys: Res<ButtonInput<KeyCode>>,
-) {
-    for (bar, movable, mut transform) in &mut bars {
-        let mut direction = Vec3::new(0.0, 0.0, 0.0);
+fn movement(mut entities: Query<(&Moving, &mut Transform)>, timer: Res<Time>) {
+    for (moving, mut transform) in &mut entities {
+        transform.translation += moving.direction * moving.speed * timer.delta_secs();
+    }
+}
+
+fn bar_input(mut bars: Query<(&Bar, &mut Moving)>, keys: Res<ButtonInput<KeyCode>>) {
+    for (bar, mut moving) in &mut bars {
+        let mut direction = Vec3::ZERO;
 
         if bar.0 == 0 {
             if keys.pressed(KeyCode::ArrowUp) {
@@ -228,8 +223,12 @@ fn movement(
             }
         }
 
-        transform.translation += direction * movable.speed * timer.delta_secs();
+        moving.direction = direction;
+    }
+}
 
+fn clamp_bars(mut bars: Query<&mut Transform, With<Bar>>) {
+    for mut transform in &mut bars {
         transform.translation.y = transform.translation.y.clamp(
             (-(WINDOW_HEIGHT as f32) + BAR_HEIGHT) / 2.0,
             (WINDOW_HEIGHT as f32 - BAR_HEIGHT) / 2.0,
@@ -237,14 +236,12 @@ fn movement(
     }
 }
 
-fn sliding(
-    ball: Single<(&mut Sliding, &mut Transform), With<Ball>>,
-    timer: Res<Time>,
+fn ball_bounds(
+    ball: Single<(&mut Moving, &mut Transform), With<Ball>>,
     mut score: ResMut<Score>,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
     let (mut sliding, mut transform) = ball.into_inner();
-    transform.translation += sliding.direction.normalize() * sliding.speed * timer.delta_secs();
 
     if transform.translation.y - BALL_RADIUS <= -(WINDOW_HEIGHT as f32) / 2.0 {
         transform.translation.y = -(WINDOW_HEIGHT as f32) / 2.0 + BALL_RADIUS + 0.1;
@@ -254,8 +251,6 @@ fn sliding(
         transform.translation.y = WINDOW_HEIGHT as f32 / 2.0 - BALL_RADIUS + 0.1;
         sliding.direction.y *= -1.0;
     }
-
-    // TODO: Slide ball out of edge when touching to prevent "stuck" on edge
 
     if transform.translation.x >= WINDOW_WIDTH as f32 / 2.0
         || transform.translation.x <= -(WINDOW_WIDTH as f32) / 2.0
@@ -281,12 +276,12 @@ fn sliding(
 
 #[allow(clippy::type_complexity)]
 fn collision(
-    bars: Query<&Transform, (With<Bar>, With<Collider>, Without<Ball>)>,
-    ball: Single<(&mut Transform, &mut Sliding), (With<Ball>, With<Collider>)>,
+    bars: Query<&Transform, (With<Bar>, Without<Ball>)>,
+    ball: Single<(&mut Transform, &mut Moving), (With<Ball>, Without<Bar>)>,
     sound_effect: Res<SoundEffect>,
     mut commands: Commands,
 ) {
-    let (mut ball_transform, mut ball_sliding) = ball.into_inner();
+    let (mut ball_transform, mut ball_moving) = ball.into_inner();
 
     for bar_transform in &bars {
         let aabb = Vec3::new(BAR_WIDTH / 2.0, BAR_HEIGHT / 2.0, 0.0);
@@ -313,7 +308,7 @@ fn collision(
             ball_transform.translation.x =
                 bar_transform.translation.x - ((BAR_WIDTH / 2.0) + BALL_RADIUS + 0.1) * sign;
 
-            ball_sliding.direction = Vec3::new(
+            ball_moving.direction = Vec3::new(
                 -sign * ops::cos(-sign * bounce_angle),
                 -sign * ops::sin(-sign * bounce_angle),
                 0.0,
