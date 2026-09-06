@@ -4,6 +4,7 @@ use bevy::camera::ScalingMode;
 use bevy::prelude::*;
 use rand::RngExt;
 
+// Settings
 const BAR_SPEED: f32 = 1000.0;
 const BAR_WIDTH: f32 = 5.0;
 const BAR_HEIGHT: f32 = 150.0;
@@ -15,19 +16,19 @@ const BALL_MAX_ANGLE: f32 = 45.0;
 const WINDOW_WIDTH: u32 = 1280;
 const WINDOW_HEIGHT: u32 = 720;
 
-// TODO: State
-// TODO: Racket and Wall collision slide
 // TODO: Common "Velocity"/"Moving" Component
 // TODO: Slow start velocity
 // TODO: Main Menu
 // TODO: AI
 
+// State
 #[derive(States, Debug, Hash, Eq, PartialEq, Clone)]
 enum GameState {
     Paused,
     InGame,
 }
 
+// Components
 #[derive(Component)]
 struct Movable {
     speed: f32,
@@ -56,6 +57,7 @@ struct ScoreText;
 #[derive(Component)]
 struct PauseText;
 
+// Resources
 #[derive(Resource, Deref)]
 struct SoundEffect {
     handle: Handle<AudioSource>,
@@ -249,7 +251,7 @@ fn sliding(
         sliding.direction.y *= -1.0;
     }
     if transform.translation.y + BALL_RADIUS >= WINDOW_HEIGHT as f32 / 2.0 {
-        transform.translation.y = WINDOW_HEIGHT as f32 / 2.0 - BALL_RADIUS - 0.1;
+        transform.translation.y = WINDOW_HEIGHT as f32 / 2.0 - BALL_RADIUS + 0.1;
         sliding.direction.y *= -1.0;
     }
 
@@ -280,11 +282,11 @@ fn sliding(
 #[allow(clippy::type_complexity)]
 fn collision(
     bars: Query<&Transform, (With<Bar>, With<Collider>, Without<Ball>)>,
-    ball: Single<(&Transform, &mut Sliding), (With<Ball>, With<Collider>)>,
+    ball: Single<(&mut Transform, &mut Sliding), (With<Ball>, With<Collider>)>,
     sound_effect: Res<SoundEffect>,
     mut commands: Commands,
 ) {
-    let (ball_transform, mut ball_sliding) = ball.into_inner();
+    let (mut ball_transform, mut ball_sliding) = ball.into_inner();
 
     for bar_transform in &bars {
         let aabb = Vec3::new(BAR_WIDTH / 2.0, BAR_HEIGHT / 2.0, 0.0);
@@ -306,6 +308,10 @@ fn collision(
             let bounce_angle = (BALL_MAX_ANGLE * normalized_offset) * (PI / 180.0);
 
             let sign = ball_transform.translation.x.signum();
+
+            // Slide ball out of the bar
+            ball_transform.translation.x =
+                bar_transform.translation.x - ((BAR_WIDTH / 2.0) + BALL_RADIUS + 0.1) * sign;
 
             ball_sliding.direction = Vec3::new(
                 -sign * ops::cos(-sign * bounce_angle),
