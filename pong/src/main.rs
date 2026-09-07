@@ -16,16 +16,15 @@ const BALL_MAX_ANGLE: f32 = 45.0;
 const WINDOW_WIDTH: u32 = 1280;
 const WINDOW_HEIGHT: u32 = 720;
 
-// TODO: Common "Velocity"/"Moving" Component
-// TODO: Slow start velocity
 // TODO: Main Menu
 // TODO: AI
 
 // State
-#[derive(States, Debug, Hash, Eq, PartialEq, Clone)]
+#[derive(States, Debug, Hash, Eq, PartialEq, Clone, Copy)]
 enum GameState {
     Paused,
     InGame,
+    Ended,
 }
 
 // Components
@@ -38,8 +37,10 @@ struct Moving {
 #[derive(Component)]
 struct Bar(u8);
 
+// Contains information on whether the ball
+// has hit a racket yet
 #[derive(Component)]
-struct Ball;
+struct Ball(bool);
 
 #[derive(Component)]
 struct ScoreText;
@@ -79,6 +80,7 @@ impl Plugin for PongPlugin {
         );
         app.add_systems(OnEnter(GameState::Paused), show_pause_text);
         app.add_systems(OnExit(GameState::Paused), hide_pause_text);
+        app.add_systems(OnEnter(GameState::Ended), reset_game);
     }
 }
 
@@ -131,9 +133,9 @@ fn setup(
 
     let ball_mesh = meshes.add(Circle::new(BALL_RADIUS));
     commands.spawn((
-        Ball,
+        Ball(false),
         Moving {
-            speed: BALL_SPEED,
+            speed: BALL_SPEED / 2.0,
             direction: Vec3::new(
                 (rng.random_range(-1.0..1.0) as f32).signum(),
                 rng.random_range(-0.25..0.25),
@@ -187,9 +189,9 @@ fn spawn_bar(
         MeshMaterial2d(material.clone()),
         Transform::from_xyz(
             if player == 0 {
-                WINDOW_WIDTH as f32 / 2.0 - 5.0
-            } else {
                 -(WINDOW_WIDTH as f32) / 2.0 + 5.0
+            } else {
+                WINDOW_WIDTH as f32 / 2.0 - 5.0
             },
             0.0,
             0.0,
@@ -208,17 +210,17 @@ fn bar_input(mut bars: Query<(&Bar, &mut Moving)>, keys: Res<ButtonInput<KeyCode
         let mut direction = Vec3::ZERO;
 
         if bar.0 == 0 {
-            if keys.pressed(KeyCode::ArrowUp) {
-                direction.y += 1.0;
-            }
-            if keys.pressed(KeyCode::ArrowDown) {
-                direction.y -= 1.0;
-            }
-        } else {
             if keys.pressed(KeyCode::KeyW) {
                 direction.y += 1.0;
             }
             if keys.pressed(KeyCode::KeyS) {
+                direction.y -= 1.0;
+            }
+        } else {
+            if keys.pressed(KeyCode::ArrowUp) {
+                direction.y += 1.0;
+            }
+            if keys.pressed(KeyCode::ArrowDown) {
                 direction.y -= 1.0;
             }
         }
@@ -238,50 +240,40 @@ fn clamp_bars(mut bars: Query<&mut Transform, With<Bar>>) {
 
 fn ball_bounds(
     ball: Single<(&mut Moving, &mut Transform), With<Ball>>,
-    mut score: ResMut<Score>,
     mut next_state: ResMut<NextState<GameState>>,
+    mut score: ResMut<Score>,
 ) {
-    let (mut sliding, mut transform) = ball.into_inner();
+    let (mut moving, mut transform) = ball.into_inner();
 
     if transform.translation.y - BALL_RADIUS <= -(WINDOW_HEIGHT as f32) / 2.0 {
         transform.translation.y = -(WINDOW_HEIGHT as f32) / 2.0 + BALL_RADIUS + 0.1;
-        sliding.direction.y *= -1.0;
+        moving.direction.y *= -1.0;
     }
     if transform.translation.y + BALL_RADIUS >= WINDOW_HEIGHT as f32 / 2.0 {
         transform.translation.y = WINDOW_HEIGHT as f32 / 2.0 - BALL_RADIUS + 0.1;
-        sliding.direction.y *= -1.0;
+        moving.direction.y *= -1.0;
     }
 
     if transform.translation.x >= WINDOW_WIDTH as f32 / 2.0
         || transform.translation.x <= -(WINDOW_WIDTH as f32) / 2.0
     {
-        next_state.set(GameState::Paused);
-
+        next_state.set(GameState::Ended);
         if transform.translation.x > 0.0 {
-            score.p2 += 1;
-        } else {
             score.p1 += 1;
+        } else {
+            score.p2 += 1;
         }
-
-        transform.translation = Vec3::new(0.0, 0.0, 0.0);
-
-        let mut rng = rand::rng();
-        sliding.direction = Vec3::new(
-            (rng.random_range(-1.0..1.0) as f32).signum(),
-            rng.random_range(-0.25..0.25),
-            0.0,
-        );
     }
 }
 
 #[allow(clippy::type_complexity)]
 fn collision(
     bars: Query<&Transform, (With<Bar>, Without<Ball>)>,
-    ball: Single<(&mut Transform, &mut Moving), (With<Ball>, Without<Bar>)>,
+    ball: Single<(&mut Transform, &mut Moving, &mut Ball), Without<Bar>>,
     sound_effect: Res<SoundEffect>,
     mut commands: Commands,
 ) {
-    let (mut ball_transform, mut ball_moving) = ball.into_inner();
+    let (mut ball_transform, mut ball_moving, mut ball) = ball.into_inner();
 
     for bar_transform in &bars {
         let aabb = Vec3::new(BAR_WIDTH / 2.0, BAR_HEIGHT / 2.0, 0.0);
@@ -293,6 +285,11 @@ fn collision(
         let collision = (ball_transform.translation - closest_point).length() <= BALL_RADIUS;
 
         if collision {
+            if !ball.0 {
+                ball.0 = true;
+                ball_moving.speed = BALL_SPEED;
+            }
+
             commands.spawn((
                 AudioPlayer::new(sound_effect.clone()),
                 PlaybackSettings::DESPAWN,
@@ -326,13 +323,14 @@ fn toggle_pause(
         next_state.set(match state.get() {
             GameState::Paused => GameState::InGame,
             GameState::InGame => GameState::Paused,
+            _ => *state.get(),
         });
     }
 }
 
 fn update_score_text(score_text: Single<&mut Text, With<ScoreText>>, score: Res<Score>) {
     if score.is_changed() {
-        score_text.into_inner().0 = format!("{:02} | {:02}", score.p2, score.p1);
+        score_text.into_inner().0 = format!("{:02} | {:02}", score.p1, score.p2);
     }
 }
 
@@ -342,4 +340,36 @@ fn show_pause_text(pause_text: Single<&mut Visibility, With<PauseText>>) {
 
 fn hide_pause_text(pause_text: Single<&mut Visibility, With<PauseText>>) {
     *pause_text.into_inner() = Visibility::Hidden;
+}
+
+fn reset_game(
+    ball_entity: Single<(&mut Transform, &mut Moving, &mut Ball), Without<Bar>>,
+    bars: Query<&mut Transform, (With<Bar>, Without<Ball>)>,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    let (mut ball_transform, mut ball_moving, mut ball) = ball_entity.into_inner();
+    reset_ball(&mut ball_transform, &mut ball_moving, &mut ball);
+
+    reset_bars(bars);
+
+    next_state.set(GameState::Paused);
+}
+
+fn reset_ball(ball_transform: &mut Transform, ball_moving: &mut Moving, ball: &mut Ball) {
+    ball_transform.translation = Vec3::ZERO;
+
+    ball_moving.speed = BALL_SPEED / 2.0;
+    ball_moving.direction = Vec3::new(
+        (rand::rng().random_range(-1.0..1.0) as f32).signum(),
+        rand::rng().random_range(-0.25..0.25),
+        0.0,
+    );
+
+    ball.0 = false;
+}
+
+fn reset_bars(mut bars: Query<&mut Transform, (With<Bar>, Without<Ball>)>) {
+    for mut transform in &mut bars {
+        transform.translation.y = 0.0;
+    }
 }
