@@ -1,6 +1,7 @@
-mod atari;
+mod bar;
+mod breakout;
 
-use crate::atari::AtariPlugin;
+use crate::breakout::BreakoutPlugin;
 
 use bevy::prelude::{
     App, ClearColor, Color, DefaultPlugins, PluginGroup, Window, WindowPlugin, default,
@@ -21,6 +22,6 @@ fn main() {
             }),
             ..default()
         }))
-        .add_plugins(AtariPlugin)
+        .add_plugins(BreakoutPlugin)
         .run();
 }

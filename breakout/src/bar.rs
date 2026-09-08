@@ -1,3 +1,5 @@
+use bevy::prelude::{App, Plugin};
+
 pub struct BarPlugin;
 
 impl Plugin for BarPlugin {
