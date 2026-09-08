@@ -1,6 +1,7 @@
 use std::f32::consts::PI;
 
 use bevy::camera::ScalingMode;
+use bevy::input_focus::{FocusCause, InputFocus};
 use bevy::prelude::*;
 use rand::RngExt;
 
@@ -16,6 +17,18 @@ const BALL_MAX_ANGLE: f32 = 45.0;
 const WINDOW_WIDTH: u32 = 1280;
 const WINDOW_HEIGHT: u32 = 720;
 
+const BUTTON_BG_NORMAL: Color = Color::BLACK;
+const BUTTON_BG_HOVER: Color = Color::srgb(0.25, 0.25, 0.25);
+const BUTTON_BG_PRESS: Color = Color::WHITE;
+
+const BUTTON_BORDER_NORMAL: Color = Color::WHITE;
+const BUTTON_BORDER_HOVER: Color = Color::srgb(0.75, 0.75, 0.75);
+const BUTTON_BORDER_PRESS: Color = Color::srgb(0.75, 0.75, 0.75);
+
+const BUTTON_TEXT_NORMAL: Color = Color::WHITE;
+const BUTTON_TEXT_HOVER: Color = Color::WHITE;
+const BUTTON_TEXT_PRESS: Color = Color::BLACK;
+
 // TODO: Main Menu
 // TODO: AI
 
@@ -25,6 +38,7 @@ enum GameState {
     Paused,
     InGame,
     Ended,
+    MainMenu,
 }
 
 // Components
@@ -48,6 +62,15 @@ struct ScoreText;
 #[derive(Component)]
 struct PauseText;
 
+#[derive(Component)]
+struct MainMenu;
+
+#[derive(Component)]
+struct StartButton;
+
+#[derive(Component)]
+struct QuitButton;
+
 // Resources
 #[derive(Resource, Deref)]
 struct SoundEffect {
@@ -66,7 +89,8 @@ impl Plugin for PongPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Score { p1: 0, p2: 0 });
         app.init_resource::<SoundEffect>();
-        app.insert_state(GameState::Paused);
+        app.init_resource::<InputFocus>();
+        app.insert_state(GameState::MainMenu);
         app.add_systems(Startup, setup);
         app.add_systems(
             Update,
@@ -76,11 +100,17 @@ impl Plugin for PongPlugin {
                     .run_if(in_state(GameState::InGame)),
                 toggle_pause,
                 update_score_text,
+                button_system.run_if(in_state(GameState::MainMenu)),
             ),
         );
+
         app.add_systems(OnEnter(GameState::Paused), show_pause_text);
         app.add_systems(OnExit(GameState::Paused), hide_pause_text);
+
         app.add_systems(OnEnter(GameState::Ended), reset_game);
+
+        app.add_systems(OnEnter(GameState::MainMenu), show_main_menu);
+        app.add_systems(OnExit(GameState::MainMenu), hide_main_menu);
     }
 }
 
@@ -125,6 +155,8 @@ fn setup(
         }),
     ));
 
+    main_menu_setup(&mut commands);
+
     let color = Color::WHITE;
     let material = materials.add(color);
 
@@ -167,7 +199,7 @@ fn setup(
             top: percent(55),
             ..default()
         },
-        Visibility::Visible,
+        Visibility::Hidden,
     ));
 }
 
@@ -372,4 +404,116 @@ fn reset_bars(mut bars: Query<&mut Transform, (With<Bar>, Without<Ball>)>) {
     for mut transform in &mut bars {
         transform.translation.y = 0.0;
     }
+}
+
+fn main_menu_setup(commands: &mut Commands) {
+    commands.spawn((
+        MainMenu,
+        Node {
+            width: percent(100),
+            height: percent(100),
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            flex_direction: FlexDirection::Column,
+            row_gap: px(10),
+            ..default()
+        },
+        Visibility::Visible,
+        BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.9)),
+        ZIndex(100),
+        children![
+            (
+                Button,
+                StartButton,
+                Node {
+                    width: px(150),
+                    height: px(65),
+                    border: UiRect::all(px(5)),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    border_radius: BorderRadius::MAX,
+                    ..default()
+                },
+                BorderColor::all(Color::WHITE),
+                BackgroundColor(Color::BLACK),
+                children![(Text::new("Start Game"))]
+            ),
+            (
+                Button,
+                QuitButton,
+                Node {
+                    width: px(150),
+                    height: px(65),
+                    border: UiRect::all(px(5)),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    border_radius: BorderRadius::MAX,
+                    ..default()
+                },
+                BorderColor::all(Color::WHITE),
+                BackgroundColor(BUTTON_BG_NORMAL),
+                children![(
+                    Text::new("Exit Game"),
+                    children![(TextColor(BUTTON_TEXT_NORMAL))]
+                )]
+            )
+        ],
+    ));
+}
+
+#[allow(clippy::type_complexity)]
+fn button_system(
+    mut input_focus: ResMut<InputFocus>,
+    start_button: Single<
+        (
+            Entity,
+            &Interaction,
+            &mut BackgroundColor,
+            &mut BorderColor,
+            &mut Button,
+            &Children,
+        ),
+        With<StartButton>,
+    >,
+    mut text_color_query: Query<&mut TextColor>,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    let (entity, interaction, mut background_color, mut border_color, mut button, children) =
+        start_button.into_inner();
+    let mut start_game_text_color = text_color_query.get_mut(children[0]).unwrap();
+
+    match *interaction {
+        Interaction::Pressed => {
+            input_focus.set(entity, FocusCause::Pressed);
+            *background_color = BackgroundColor(BUTTON_BG_PRESS);
+            *border_color = BorderColor::all(BUTTON_BORDER_PRESS);
+            **start_game_text_color = BUTTON_TEXT_PRESS;
+            button.set_changed();
+
+            next_state.set(GameState::Paused);
+        }
+
+        Interaction::Hovered => {
+            input_focus.set(entity, FocusCause::Pressed);
+            *background_color = BackgroundColor(BUTTON_BG_HOVER);
+            *border_color = BorderColor::all(BUTTON_BORDER_HOVER);
+            **start_game_text_color = BUTTON_TEXT_HOVER;
+            button.set_changed();
+        }
+
+        Interaction::None => {
+            input_focus.clear();
+            *background_color = BackgroundColor(BUTTON_BG_NORMAL);
+            **start_game_text_color = BUTTON_TEXT_NORMAL;
+            *border_color = BorderColor::all(BUTTON_BORDER_NORMAL);
+        }
+    }
+}
+
+fn hide_main_menu(visibility: Single<&mut Visibility, With<MainMenu>>) {
+    *visibility.into_inner() = Visibility::Hidden;
+}
+
+fn show_main_menu(visibility: Single<&mut Visibility, With<MainMenu>>) {
+    *visibility.into_inner() = Visibility::Visible;
 }
