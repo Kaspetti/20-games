@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::state::SceneState;
+
 pub struct SchedulePlugin;
 
 impl Plugin for SchedulePlugin {
@@ -12,7 +14,8 @@ impl Plugin for SchedulePlugin {
                 GameSet::Bounds,
                 GameSet::Collision,
             )
-                .chain(),
+                .chain()
+                .run_if(in_state(SceneState::InGame)),
         );
     }
 }

@@ -1,3 +1,4 @@
+mod arena;
 mod bar;
 mod breakout;
 mod movement;
@@ -10,8 +11,8 @@ use bevy::prelude::{
     App, ClearColor, Color, DefaultPlugins, PluginGroup, Window, WindowPlugin, default,
 };
 
-const WINDOW_WIDTH: u32 = 1280;
-const WINDOW_HEIGHT: u32 = 720;
+const WINDOW_WIDTH: u32 = 1000;
+const WINDOW_HEIGHT: u32 = 1000;
 
 const WINDOW_COLOR: Color = Color::srgb(0.369, 0.788, 0.969);
 

@@ -5,7 +5,7 @@ use crate::{movement::Movement, state::SceneState};
 pub struct BarPlugin;
 impl Plugin for BarPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(SceneState::InGame), setup);
+        app.add_systems(OnEnter(SceneState::InGame), spawn_bar);
     }
 }
 
@@ -18,7 +18,7 @@ const BAR_SPEED: f32 = 500.0;
 #[derive(Component)]
 struct Bar;
 
-fn setup(
+fn spawn_bar(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
@@ -34,7 +34,7 @@ fn setup(
         },
         Mesh2d(bar_mesh),
         MeshMaterial2d(material.clone()),
-        Transform::from_xyz(0.0, -(crate::WINDOW_HEIGHT as f32) / 2.0 + 100.0, 0.0),
+        Transform::from_xyz(0.0, -crate::arena::ARENA_HEIGHT / 2.0 + 150.0, 0.0),
         DespawnOnExit(SceneState::InGame),
     ));
 }
