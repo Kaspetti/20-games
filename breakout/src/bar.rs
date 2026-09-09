@@ -16,7 +16,7 @@ const BAR_HEIGHT: f32 = 10.0;
 const BAR_SPEED: f32 = 500.0;
 
 #[derive(Component)]
-struct Bar;
+pub struct Bar;
 
 fn spawn_bar(
     mut commands: Commands,

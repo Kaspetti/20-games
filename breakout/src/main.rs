@@ -2,6 +2,7 @@ mod arena;
 mod ball;
 mod bar;
 mod breakout;
+mod input;
 mod movement;
 mod schedule;
 mod state;
