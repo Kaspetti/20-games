@@ -1,6 +1,7 @@
 mod bar;
 mod breakout;
 mod movement;
+mod schedule;
 mod state;
 
 use crate::breakout::BreakoutPlugin;

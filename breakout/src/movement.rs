@@ -1,12 +1,12 @@
 use bevy::prelude::*;
 
-use crate::breakout::MovementSet;
+use crate::schedule::GameSet;
 
 pub struct MovementPlugin;
 
 impl Plugin for MovementPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, movement_system.in_set(MovementSet::Movement));
+        app.add_systems(Update, movement_system.in_set(GameSet::Movement));
     }
 }
 
