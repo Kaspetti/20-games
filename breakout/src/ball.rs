@@ -10,12 +10,14 @@ impl Plugin for BallPlugin {
     }
 }
 
-const BALL_SPEED: f32 = 50.0;
+const BALL_SPEED: f32 = 500.0;
 const BALL_RADIUS: f32 = 10.0;
 const BALL_COLOR: Color = Color::srgb(1.0, 1.0, 0.0);
 
 #[derive(Component)]
-struct Ball;
+pub struct Ball {
+    pub radius: f32,
+}
 
 fn spawn_ball(
     mut commands: Commands,
@@ -26,7 +28,9 @@ fn spawn_ball(
     let material = materials.add(BALL_COLOR);
 
     commands.spawn((
-        Ball,
+        Ball {
+            radius: BALL_RADIUS,
+        },
         Movement {
             speed: BALL_SPEED,
             direction: -Vec3::Y,

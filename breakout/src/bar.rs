@@ -1,6 +1,10 @@
 use bevy::prelude::*;
 
-use crate::{movement::Movement, state::SceneState};
+use crate::{
+    collision::{Collider, ColliderType},
+    movement::Movement,
+    state::SceneState,
+};
 
 pub struct BarPlugin;
 impl Plugin for BarPlugin {
@@ -28,6 +32,10 @@ fn spawn_bar(
 
     commands.spawn((
         Bar,
+        Collider {
+            collider_type: ColliderType::Bar,
+            aabb: Vec3::new(BAR_WIDTH / 2.0, BAR_HEIGHT / 2.0, 0.0),
+        },
         Movement {
             speed: BAR_SPEED,
             direction: Vec3::ZERO,

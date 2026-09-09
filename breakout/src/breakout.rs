@@ -1,6 +1,6 @@
 use crate::{
-    arena::ArenaPlugin, ball::BallPlugin, bar::BarPlugin, input::InputPlugin,
-    movement::MovementPlugin, schedule::SchedulePlugin, state::StatePlugin,
+    arena::ArenaPlugin, ball::BallPlugin, bar::BarPlugin, collision::CollisionPlugin,
+    input::InputPlugin, movement::MovementPlugin, schedule::SchedulePlugin, state::StatePlugin,
 };
 
 use bevy::{camera::ScalingMode, prelude::*};
@@ -17,6 +17,7 @@ impl Plugin for BreakoutPlugin {
             BallPlugin,
             ArenaPlugin,
             MovementPlugin,
+            CollisionPlugin,
         ));
 
         app.add_systems(Startup, setup);
