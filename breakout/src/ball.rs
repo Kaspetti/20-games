@@ -37,7 +37,7 @@ fn spawn_ball(
         },
         Mesh2d(mesh),
         MeshMaterial2d(material),
-        Transform::from_xyz(0.0, 0.0, 0.0),
+        Transform::from_xyz(0.0, -50.0, 0.0),
         DespawnOnExit(SceneState::InGame),
     ));
 }

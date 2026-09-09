@@ -2,6 +2,7 @@ mod arena;
 mod ball;
 mod bar;
 mod breakout;
+mod brick;
 mod collision;
 mod input;
 mod movement;
