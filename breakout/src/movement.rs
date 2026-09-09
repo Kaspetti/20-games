@@ -11,9 +11,9 @@ impl Plugin for MovementPlugin {
 }
 
 #[derive(Component)]
-struct Movement {
-    speed: f32,
-    direction: Vec3,
+pub struct Movement {
+    pub speed: f32,
+    pub direction: Vec3,
 }
 
 fn movement_system(mut query: Query<(&mut Transform, &Movement)>, time: Res<Time>) {
