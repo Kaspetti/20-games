@@ -1,4 +1,5 @@
 mod arena;
+mod ball;
 mod bar;
 mod breakout;
 mod movement;
