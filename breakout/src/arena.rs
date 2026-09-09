@@ -17,7 +17,7 @@ pub const ARENA_WIDTH: f32 = 1000.0;
 pub const ARENA_HEIGHT: f32 = 1000.0;
 
 const WALL_COLOR: Color = Color::BLACK;
-const WALL_THICKNESS: f32 = 15.0;
+pub const WALL_THICKNESS: f32 = 15.0;
 
 fn spawn_arena(
     mut commands: Commands,

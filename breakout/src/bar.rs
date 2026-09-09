@@ -1,8 +1,10 @@
 use bevy::prelude::*;
 
 use crate::{
+    arena::{ARENA_WIDTH, WALL_THICKNESS},
     collision::{Collider, ColliderType},
     movement::Movement,
+    schedule::GameSet,
     state::SceneState,
 };
 
@@ -10,6 +12,7 @@ pub struct BarPlugin;
 impl Plugin for BarPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(SceneState::InGame), spawn_bar);
+        app.add_systems(Update, clamp_system.in_set(GameSet::Bounds));
     }
 }
 
@@ -45,4 +48,13 @@ fn spawn_bar(
         Transform::from_xyz(0.0, -crate::arena::ARENA_HEIGHT / 2.0 + 150.0, 0.0),
         DespawnOnExit(SceneState::InGame),
     ));
+}
+
+fn clamp_system(bar_q: Single<&mut Transform, With<Bar>>) {
+    let mut transform = bar_q.into_inner();
+
+    transform.translation.x = transform.translation.x.clamp(
+        (BAR_WIDTH - ARENA_WIDTH) / 2.0 + WALL_THICKNESS,
+        (ARENA_WIDTH - BAR_WIDTH) / 2.0 - WALL_THICKNESS,
+    )
 }
