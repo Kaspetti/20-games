@@ -15,7 +15,7 @@ impl Plugin for BrickPlugin {
 
 const BRICK_ROWS: u32 = 8;
 const BRICK_COLUMNS: u32 = 16;
-const BRICK_GAP: f32 = 10.0;
+const BRICK_GAP: f32 = 5.0;
 
 const BRICK_WIDTH: f32 =
     (ARENA_WIDTH - BRICK_GAP * (BRICK_COLUMNS as f32 + 1.0)) / BRICK_COLUMNS as f32;

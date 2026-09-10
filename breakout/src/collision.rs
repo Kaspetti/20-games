@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use bevy::prelude::*;
 
-use crate::{ball::Ball, movement::Movement, schedule::GameSet};
+use crate::{ball::Ball, movement::Movement, schedule::GameSet, state::GameState};
 
 pub struct CollisionPlugin;
 
@@ -28,6 +28,7 @@ pub struct Collider {
 fn collision_system(
     ball_q: Single<(&Ball, &mut Transform, &mut Movement)>,
     collider_q: Query<(&Transform, &Collider), Without<Ball>>,
+    mut next_state: ResMut<NextState<GameState>>,
 ) {
     let (ball, mut ball_transform, mut ball_movement) = ball_q.into_inner();
 
@@ -69,10 +70,32 @@ fn collision_system(
                     ball_movement.direction.y *= -1.0;
                 }
 
-                ColliderType::Brick => {}
+                ColliderType::Brick => {
+                    let x_offset =
+                        (ball_transform.translation.x - col_transform.translation.x) / col.aabb.x;
+                    let y_offset =
+                        (ball_transform.translation.y - col_transform.translation.y) / col.aabb.y;
+
+                    println!("{} | {}", x_offset, y_offset);
+                    // let offset = ball_transform.translation.x - col_transform.translation.x;
+                    // let normalized_offset = offset / (col.aabb.x);
+                    // let bounce_angle = (45.0 * normalized_offset) * (PI / 180.0);
+                    //
+                    // println!("{}", bounce_angle);
+                    next_state.set(GameState::Paused);
+
+                    // ball_transform.translation.y =
+                    //     col_transform.translation.y - (col.aabb.y + ball.radius + 0.1);
+                    //
+                    // ball_movement.direction =
+                    //     Vec3::new(-ops::sin(-bounce_angle), ops::cos(-bounce_angle), 0.0);
+                }
             }
 
             ball_movement.direction = ball_movement.direction.normalize_or_zero();
+
+            // Allow ball to only collide with one object per frame
+            break;
         }
     }
 }

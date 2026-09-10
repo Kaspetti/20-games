@@ -54,7 +54,7 @@ fn clamp_system(bar_q: Single<&mut Transform, With<Bar>>) {
     let mut transform = bar_q.into_inner();
 
     transform.translation.x = transform.translation.x.clamp(
-        (BAR_WIDTH - ARENA_WIDTH) / 2.0 + WALL_THICKNESS,
-        (ARENA_WIDTH - BAR_WIDTH) / 2.0 - WALL_THICKNESS,
+        (BAR_WIDTH - ARENA_WIDTH) / 2.0,
+        (ARENA_WIDTH - BAR_WIDTH) / 2.0,
     )
 }
