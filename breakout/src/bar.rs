@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    arena::{ARENA_WIDTH, WALL_THICKNESS},
+    arena::{ARENA_HEIGHT, ARENA_WIDTH, WALL_THICKNESS},
     collision::{Collider, ColliderType},
     movement::Movement,
     schedule::GameSet,
@@ -45,7 +45,7 @@ fn spawn_bar(
         },
         Mesh2d(bar_mesh),
         MeshMaterial2d(material.clone()),
-        Transform::from_xyz(0.0, -crate::arena::ARENA_HEIGHT / 2.0 + 150.0, 0.0),
+        Transform::from_xyz(0.0, -(ARENA_HEIGHT / 2.0) + ARENA_HEIGHT / 10.0, 0.0),
         DespawnOnExit(SceneState::InGame),
     ));
 }

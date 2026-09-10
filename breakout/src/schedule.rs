@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::state::SceneState;
+use crate::state::{GameState, SceneState};
 
 pub struct SchedulePlugin;
 
@@ -15,7 +15,8 @@ impl Plugin for SchedulePlugin {
                 GameSet::Collision,
             )
                 .chain()
-                .run_if(in_state(SceneState::InGame)),
+                .run_if(in_state(SceneState::InGame))
+                .run_if(in_state(GameState::Playing)),
         );
     }
 }

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{movement::Movement, state::SceneState};
+use crate::{arena::ARENA_HEIGHT, movement::Movement, state::SceneState};
 
 pub struct BallPlugin;
 
@@ -37,7 +37,7 @@ fn spawn_ball(
         },
         Mesh2d(mesh),
         MeshMaterial2d(material),
-        Transform::from_xyz(0.0, -50.0, 0.0),
+        Transform::from_xyz(0.0, -(ARENA_HEIGHT / 2.0) + ARENA_HEIGHT / 5.0, 0.0),
         DespawnOnExit(SceneState::InGame),
     ));
 }

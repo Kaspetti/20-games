@@ -14,7 +14,7 @@ impl Plugin for ArenaPlugin {
 }
 
 pub const ARENA_WIDTH: f32 = 1000.0;
-pub const ARENA_HEIGHT: f32 = 1000.0;
+pub const ARENA_HEIGHT: f32 = 500.0;
 
 const WALL_COLOR: Color = Color::BLACK;
 pub const WALL_THICKNESS: f32 = 15.0;
