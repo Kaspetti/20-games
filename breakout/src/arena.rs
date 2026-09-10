@@ -35,7 +35,7 @@ fn spawn_arena(
         },
         Mesh2d(wall_mesh.clone()),
         MeshMaterial2d(material.clone()),
-        Transform::from_xyz((ARENA_WIDTH - WALL_THICKNESS) / 2.0, 0.0, 0.0),
+        Transform::from_xyz((ARENA_WIDTH + WALL_THICKNESS) / 2.0, 0.0, 0.0),
         DespawnOnExit(SceneState::InGame),
     ));
     commands.spawn((
@@ -45,7 +45,7 @@ fn spawn_arena(
         },
         Mesh2d(wall_mesh.clone()),
         MeshMaterial2d(material.clone()),
-        Transform::from_xyz(-(ARENA_WIDTH - WALL_THICKNESS) / 2.0, 0.0, 0.0),
+        Transform::from_xyz(-(ARENA_WIDTH + WALL_THICKNESS) / 2.0, 0.0, 0.0),
         DespawnOnExit(SceneState::InGame),
     ));
 
@@ -58,7 +58,7 @@ fn spawn_arena(
         },
         Mesh2d(ceiling_mesh),
         MeshMaterial2d(material.clone()),
-        Transform::from_xyz(0.0, (ARENA_HEIGHT - WALL_THICKNESS) / 2.0, 0.0),
+        Transform::from_xyz(0.0, (ARENA_HEIGHT + WALL_THICKNESS) / 2.0, 0.0),
         DespawnOnExit(SceneState::InGame),
     ));
 }
