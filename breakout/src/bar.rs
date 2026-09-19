@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
-    arena::{ARENA_HEIGHT, ARENA_WIDTH, WALL_THICKNESS},
+    arena::{ARENA_HEIGHT, ARENA_WIDTH},
     collision::{Collider, ColliderType},
     movement::Movement,
     schedule::GameSet,
@@ -17,7 +17,7 @@ impl Plugin for BarPlugin {
 }
 
 const BAR_COLOR: Color = Color::srgb(1.0, 0.0, 0.0);
-const BAR_WIDTH: f32 = 100.0;
+const BAR_WIDTH: f32 = 150.0;
 const BAR_HEIGHT: f32 = 10.0;
 
 const BAR_SPEED: f32 = 750.0;
