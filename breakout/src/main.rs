@@ -17,7 +17,7 @@ use bevy::prelude::{
 use bevy_dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin};
 
 const WINDOW_WIDTH: u32 = 1000;
-const WINDOW_HEIGHT: u32 = 500;
+const WINDOW_HEIGHT: u32 = 750;
 
 const WINDOW_COLOR: Color = Color::srgb(0.369, 0.788, 0.969);
 

@@ -27,12 +27,13 @@ pub struct Collider {
 
 fn collision_system(
     ball_q: Single<(&Ball, &mut Transform, &mut Movement)>,
-    collider_q: Query<(&Transform, &Collider), Without<Ball>>,
+    collider_q: Query<(&Transform, &Collider, Entity), Without<Ball>>,
+    mut commands: Commands,
     mut next_state: ResMut<NextState<GameState>>,
 ) {
     let (ball, mut ball_transform, mut ball_movement) = ball_q.into_inner();
 
-    for (col_transform, col) in collider_q {
+    for (col_transform, col, entity) in collider_q {
         let distance = ball_transform.translation - col_transform.translation;
         let clamped_distance = distance.clamp(-col.aabb, col.aabb);
         let closest_point = col_transform.translation + clamped_distance;
@@ -71,24 +72,34 @@ fn collision_system(
                 }
 
                 ColliderType::Brick => {
-                    let x_offset =
-                        (ball_transform.translation.x - col_transform.translation.x) / col.aabb.x;
-                    let y_offset =
-                        (ball_transform.translation.y - col_transform.translation.y) / col.aabb.y;
+                    let tolerance = 0.00001;
+                    let mut t_high =
+                        (col.aabb.x.powi(2) + col.aabb.y.powi(2)).sqrt() + 2.0 * ball.radius;
 
-                    println!("{} | {}", x_offset, y_offset);
-                    // let offset = ball_transform.translation.x - col_transform.translation.x;
-                    // let normalized_offset = offset / (col.aabb.x);
-                    // let bounce_angle = (45.0 * normalized_offset) * (PI / 180.0);
-                    //
-                    // println!("{}", bounce_angle);
-                    next_state.set(GameState::Paused);
+                    let mut t_low = 0.0;
+                    while t_high - t_low > tolerance {
+                        let t_mid = (t_low + t_high) / 2.0;
+                        let clamped_distance = ((ball_transform.translation
+                            - ball_movement.direction * t_mid)
+                            - col_transform.translation)
+                            .clamp(-col.aabb, col.aabb);
 
-                    // ball_transform.translation.y =
-                    //     col_transform.translation.y - (col.aabb.y + ball.radius + 0.1);
-                    //
-                    // ball_movement.direction =
-                    //     Vec3::new(-ops::sin(-bounce_angle), ops::cos(-bounce_angle), 0.0);
+                        if clamped_distance.length() >= ball.radius {
+                            t_high = t_mid;
+                        } else {
+                            t_low = t_mid;
+                        }
+                    }
+
+                    ball_transform.translation -= ball_movement.direction * t_high;
+                    let collision_direction = ball_transform.translation - closest_point;
+                    if collision_direction.x.abs() > collision_direction.y.abs() {
+                        ball_movement.direction.x *= -1.0;
+                    } else {
+                        ball_movement.direction.y *= -1.0;
+                    }
+
+                    commands.entity(entity).despawn();
                 }
             }
 
