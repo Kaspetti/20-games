@@ -28,12 +28,29 @@ fn initialize_ui(mut commands: Commands) {
         Visibility::Visible,
         DespawnOnExit(SceneState::InGame),
     ));
+
+    commands.spawn((
+        PauseText,
+        Text::new("Press <Esc> to return to main menu."),
+        Node {
+            position_type: PositionType::Absolute,
+            justify_self: JustifySelf::Center,
+            top: percent(60),
+            ..default()
+        },
+        Visibility::Visible,
+        DespawnOnExit(SceneState::InGame),
+    ));
 }
 
-fn show_pause_text(pause_text: Single<&mut Visibility, With<PauseText>>) {
-    *pause_text.into_inner() = Visibility::Visible;
+fn show_pause_text(mut pause_texts: Query<&mut Visibility, With<PauseText>>) {
+    for pause_text in &mut pause_texts {
+        *pause_text.into_inner() = Visibility::Visible;
+    }
 }
 
-fn hide_pause_text(pause_text: Single<&mut Visibility, With<PauseText>>) {
-    *pause_text.into_inner() = Visibility::Hidden;
+fn hide_pause_text(mut pause_texts: Query<&mut Visibility, With<PauseText>>) {
+    for pause_text in &mut pause_texts {
+        *pause_text.into_inner() = Visibility::Hidden;
+    }
 }

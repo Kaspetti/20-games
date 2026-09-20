@@ -8,6 +8,12 @@ impl Plugin for StatePlugin {
         app.insert_state(GameState::Playing);
 
         app.add_systems(Update, pause_handler.run_if(in_state(SceneState::InGame)));
+        app.add_systems(
+            Update,
+            scene_handler
+                .run_if(in_state(GameState::Paused))
+                .run_if(in_state(SceneState::InGame)),
+        );
     }
 }
 
@@ -33,5 +39,11 @@ fn pause_handler(
             GameState::Playing => next_state.set(GameState::Paused),
             GameState::Paused => next_state.set(GameState::Playing),
         }
+    }
+}
+
+fn scene_handler(mut next_scene: ResMut<NextState<SceneState>>, input: Res<ButtonInput<KeyCode>>) {
+    if input.just_pressed(KeyCode::Escape) {
+        next_scene.set(SceneState::MainMenu);
     }
 }
