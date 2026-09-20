@@ -20,7 +20,7 @@ const BAR_COLOR: Color = Color::srgb(1.0, 0.0, 0.0);
 const BAR_WIDTH: f32 = 150.0;
 const BAR_HEIGHT: f32 = 10.0;
 
-const BAR_SPEED: f32 = 750.0;
+const BAR_SPEED: f32 = 1000.0;
 
 #[derive(Component)]
 pub struct Bar;

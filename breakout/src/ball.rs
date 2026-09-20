@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{arena::ARENA_HEIGHT, movement::Movement, state::SceneState};
+use rand::RngExt;
 
 pub struct BallPlugin;
 
@@ -10,7 +11,7 @@ impl Plugin for BallPlugin {
     }
 }
 
-const BALL_SPEED: f32 = 500.0;
+const BALL_SPEED: f32 = 750.0;
 const BALL_RADIUS: f32 = 10.0;
 const BALL_COLOR: Color = Color::srgb(1.0, 1.0, 0.0);
 
@@ -33,7 +34,7 @@ fn spawn_ball(
         },
         Movement {
             speed: BALL_SPEED,
-            direction: -Vec3::Y,
+            direction: Vec3::new(rand::rng().random_range(-0.1..0.1), -1.0, 0.0),
         },
         Mesh2d(mesh),
         MeshMaterial2d(material),
