@@ -10,11 +10,13 @@ pub struct BrickPlugin;
 impl Plugin for BrickPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(SceneState::InGame), spawn_bricks);
+        app.insert_resource(BrokenBricks(0.0));
+        app.add_observer(despawn_brick);
     }
 }
 
-const BRICK_ROWS: u32 = 8;
-const BRICK_COLUMNS: u32 = 16;
+pub const BRICK_ROWS: u32 = 8;
+pub const BRICK_COLUMNS: u32 = 16;
 const BRICK_GAP: f32 = 5.0;
 
 const BRICK_WIDTH: f32 =
@@ -27,6 +29,12 @@ const BRICK_COLORS: &[Color] = &[
     Color::srgb(1.0, 1.0, 0.0),
     Color::srgb(0.0, 1.0, 0.0),
 ];
+
+#[derive(Resource)]
+pub struct BrokenBricks(pub f32);
+
+#[derive(EntityEvent)]
+pub struct BrickBroken(pub Entity);
 
 fn spawn_bricks(
     mut commands: Commands,
@@ -62,4 +70,8 @@ fn spawn_bricks(
             ));
         }
     }
+}
+
+fn despawn_brick(trigger: On<BrickBroken>, mut commands: Commands) {
+    commands.entity(trigger.0).despawn();
 }

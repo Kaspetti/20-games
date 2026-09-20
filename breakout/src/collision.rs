@@ -2,7 +2,12 @@ use std::f32::consts::PI;
 
 use bevy::prelude::*;
 
-use crate::{ball::Ball, movement::Movement, schedule::GameSet, state::GameState};
+use crate::{
+    ball::Ball,
+    brick::{BrickBroken, BrokenBricks},
+    movement::Movement,
+    schedule::GameSet,
+};
 
 pub struct CollisionPlugin;
 
@@ -29,6 +34,7 @@ fn collision_system(
     ball_q: Single<(&Ball, &mut Transform, &mut Movement)>,
     collider_q: Query<(&Transform, &Collider, Entity), Without<Ball>>,
     mut commands: Commands,
+    mut broken_bricks: ResMut<BrokenBricks>,
 ) {
     let (ball, mut ball_transform, mut ball_movement) = ball_q.into_inner();
 
@@ -97,7 +103,8 @@ fn collision_system(
                         ball_movement.direction.y *= -1.0;
                     }
 
-                    commands.entity(entity).despawn();
+                    broken_bricks.0 += 1.0;
+                    commands.trigger(BrickBroken(entity));
                 }
             }
 
