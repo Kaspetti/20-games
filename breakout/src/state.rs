@@ -4,10 +4,10 @@ pub struct StatePlugin;
 
 impl Plugin for StatePlugin {
     fn build(&self, app: &mut App) {
-        app.insert_state(SceneState::InGame);
-        app.insert_state(GameState::Paused);
+        app.insert_state(SceneState::MainMenu);
+        app.insert_state(GameState::Playing);
 
-        app.add_systems(Update, pause_system.run_if(in_state(SceneState::InGame)));
+        app.add_systems(Update, pause_handler.run_if(in_state(SceneState::InGame)));
     }
 }
 
@@ -23,7 +23,7 @@ pub enum GameState {
     Playing,
 }
 
-fn pause_system(
+fn pause_handler(
     state: Res<State<GameState>>,
     mut next_state: ResMut<NextState<GameState>>,
     input: Res<ButtonInput<KeyCode>>,

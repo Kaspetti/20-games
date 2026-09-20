@@ -5,9 +5,11 @@ mod breakout;
 mod brick;
 mod collision;
 mod input;
+mod main_menu;
 mod movement;
 mod schedule;
 mod state;
+mod ui;
 
 use crate::breakout::BreakoutPlugin;
 
