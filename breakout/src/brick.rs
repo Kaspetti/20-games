@@ -64,7 +64,11 @@ fn spawn_bricks(
                     aabb: Vec3::new(BRICK_WIDTH / 2.0, BRICK_HEIGHT / 2.0, 0.0),
                 },
                 Mesh2d(bar_mesh.clone()),
-                MeshMaterial2d(material_handles[(y / 2.0).floor() as usize].clone()),
+                MeshMaterial2d(
+                    material_handles[(y / (BRICK_ROWS as f32 / material_handles.len() as f32))
+                        .floor() as usize]
+                        .clone(),
+                ),
                 Transform::from_xyz(x_start + x_step * x, y_start - y_step * y, 0.0),
                 DespawnOnExit(SceneState::InGame),
             ));
