@@ -64,6 +64,4 @@ fn update_speed(
     movement.speed = BALL_START_SPEED
         + (broken_bricks.0 / (BRICK_COLUMNS * BRICK_ROWS) as f32)
             * (BALL_END_SPEED - BALL_START_SPEED);
-
-    println!("{}", movement.speed);
 }
