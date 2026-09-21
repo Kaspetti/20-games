@@ -26,8 +26,8 @@ const BRICK_HEIGHT: f32 = 20.0;
 const BRICK_COLORS: &[Color] = &[
     Color::srgb(1.0, 0.0, 0.0),
     Color::srgb(1.0, 0.647, 0.0),
-    Color::srgb(1.0, 1.0, 0.0),
     Color::srgb(0.0, 1.0, 0.0),
+    Color::srgb(1.0, 1.0, 0.0),
 ];
 
 #[derive(Resource)]
@@ -40,7 +40,10 @@ fn spawn_bricks(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<ColorMaterial>>,
+    mut broken_bricks: ResMut<BrokenBricks>,
 ) {
+    broken_bricks.0 = 0.0;
+
     let bar_mesh = meshes.add(Rectangle::new(BRICK_WIDTH, BRICK_HEIGHT));
 
     let material_handles: Vec<Handle<ColorMaterial>> = BRICK_COLORS
